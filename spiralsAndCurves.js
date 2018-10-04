@@ -5,29 +5,31 @@ DATE : 2018-10-02
 
 
 var globals = {
-	mainHeight : 540,
-	mainWidth : 480,
-	baseW : 400,
-	baseH: 480, 
+	mainHeight : 640,
+	mainWidth : 640,
+	baseW : 640,
+	baseH: 640, 
 	mode : "P2D",
 	baseUnit:100,
 	strokeWeight :1,
-	strokeColor :  {r:255,g:255,b:255},
-	backgroundColor:{r:115,g:90,b:215}
+	strokeColor :  {r:0,g:0,b:0},
+	backgroundColor:{r:225,g:225,b:225}
 
 };
 var CrtlPt1,CrtlPt2,ptA,ptB;
+var arrObjects = [];
 function setup() {
     var mode = (globals.mode == "WEBGL") ? WEBGL : P2D;
 	var cnv = createCanvas(globals.mainWidth,globals.mainHeight,mode);
     cnv.parent('canvasZone');
-	ptA = {x:globals.mainWidth/2,y:100};
-	ptB = {x:globals.mainWidth/3,y:globals.mainHeight-100};
+	ptA = {x:globals.mainWidth/2,y:100,isDragged:false,radius:10,name:"A",color:"#00ff00"};
+	ptB = {x:globals.mainWidth/3,y:globals.mainHeight-100,isDragged:false,radius:10,name:"B",color:"#ee0000"};
 	
 	//line(ptA.x,ptA.y,ptB.x,ptB.y);
 	
-	CrtlPt1 = {x:100,y:80,isDragged:false,radius:10,name:"1"};
-	CrtlPt2 = {x:200,y:160,isDragged:false,radius:10,name:"2"};
+	CrtlPt1 = {x:100,y:80,isDragged:false,radius:10,name:"1",color:"#0000ff"};
+	CrtlPt2 = {x:200,y:160,isDragged:false,radius:10,name:"2",color:"#0000ff"};
+	arrObjects = [CrtlPt1,CrtlPt2,ptA,ptB];
 }
 
 function spiral(startAngle,startPoint,angleOffset,nrPoints,a,b,sign,startFct){
@@ -121,56 +123,55 @@ function draw() {
 
 	
 	
-push()
-	stroke(0,255,0);
-	bezier(ptA.x,ptA.y,CrtlPt1.x,CrtlPt1.y,CrtlPt2.x,CrtlPt2.y,ptB.x,ptB.y);
-push()
-stroke(0,255,255);
-	curve(CrtlPt1.x,CrtlPt1.y,ptA.x,ptA.y,ptB.x,ptB.y,CrtlPt2.x,CrtlPt2.y);
-pop();
-
-push()
-
-	strokeWeight(20);
-	stroke(0,255,0);
-	point(ptA.x,ptA.y);
+	push()
+		stroke(0,255,0);
+		bezier(ptA.x,ptA.y,CrtlPt1.x,CrtlPt1.y,CrtlPt2.x,CrtlPt2.y,ptB.x,ptB.y);
+	push()
 	stroke(255,0,0);
-	point(ptB.x,ptB.y);
-	
-pop();
-	drawCtrl(CrtlPt1);
-	drawCtrl(CrtlPt2);
+		curve(CrtlPt1.x,CrtlPt1.y,ptA.x,ptA.y,ptB.x,ptB.y,CrtlPt2.x,CrtlPt2.y);
+	pop();
+
+	arrObjects.forEach(function(pt){
+		drawObject(pt);
+	});
+	push()
+		textSize(12);
+		stroke(0);
+		fill(0);
+		text("Bezier in green and curve in red",20,globals.mainHeight-30);
+	pop();
+		
 }
 
 
 
-function drawCtrl(pt){
+function drawObject(pt){
 	push()
 		ellipseMode(CENTER);
 		strokeWeight(1);
-		fill(0,0,255);
-		stroke(0,0,255);
+		fill(pt.color);
+		stroke(pt.color);
 		ellipse(pt.x, pt.y, pt.radius*2, pt.radius*2); 
 		textSize(16);
 		stroke(255);
 		fill(255);
-		text(pt.name,pt.x-pt.radius/2, pt.y+pt.radius/2,);
+		text(pt.name,pt.x-pt.radius/2, pt.y+pt.radius/2);
+		textSize(12);
+		stroke(0);
+		fill(0);
+		text(floor(pt.x)+","+floor(pt.y),pt.x+pt.radius*2, pt.y);
 	pop();
 }
 
 function mouseDragged() {
   var x = mouseX;
   var y = mouseY;
-  
- if(CrtlPt1.isDragged ){
-	 CrtlPt1.x = x;
-	 CrtlPt1.y = y;
- }
- 
-  if(CrtlPt2.isDragged ){
-	 CrtlPt2.x = x;
-	 CrtlPt2.y = y;
- }
+  	arrObjects.forEach(function(pt){
+		 if(pt.isDragged ){
+			 pt.x = x;
+			 pt.y = y;
+		}
+	});
   // prevent default
   return false;
 }
@@ -179,13 +180,11 @@ function mousePressed() {
   var x = mouseX;
   var y = mouseY;
 
-  if(x <= CrtlPt1.x+CrtlPt1.radius && x >= CrtlPt1.x-CrtlPt1.radius && y <= CrtlPt1.y+CrtlPt1.radius && y >= CrtlPt1.y-CrtlPt1.radius ){
-	  CrtlPt1.isDragged = true;
-  }
-  
-    if(x <= CrtlPt2.x+CrtlPt2.radius && x >= CrtlPt2.x-CrtlPt2.radius && y <= CrtlPt2.y+CrtlPt2.radius && y >= CrtlPt2.y-CrtlPt2.radius ){
-	  CrtlPt2.isDragged = true;
-  }
+  arrObjects.forEach(function(pt){
+  if(x <= pt.x+pt.radius && x >= pt.x-pt.radius && y <= pt.y+pt.radius && y >= pt.y-pt.radius ){
+		pt.isDragged = true;
+		}
+	});
 }
 
 function mouseReleased() {
@@ -193,15 +192,12 @@ function mouseReleased() {
   var x = mouseX;
   var y = mouseY;
   
- if(CrtlPt1.isDragged ){
-	 CrtlPt1.x = x;
-	 CrtlPt1.y = y;
- }
- 
-  if(CrtlPt2.isDragged ){
-	 CrtlPt2.x = x;
-	 CrtlPt2.y = y;
- }
-	CrtlPt1.isDragged = false;
-	CrtlPt2.isDragged = false;
+   arrObjects.forEach(function(pt){
+	if(pt.isDragged ){
+		 pt.x = x;
+		 pt.y = y;
+	 }
+	 pt.isDragged = false;
+   });
+  
 }
